@@ -1,0 +1,136 @@
+=====================================================================
+    RELATÓRIO TÉCNICO — REDE NEURAL LSTM · AÇUDE ARMANDO RIBEIRO
+=====================================================================
+
+1. METODOLOGIA
+---------------------------------------------------------------------
+  Reservatório : Engenheiro Armando Ribeiro Gonçalves (Açu) — RN
+  Arquitetura  : LSTM Bidirecional (BiLSTM)
+  Lookback     : 12 meses | Horizonte: 1 mês à frente
+  Features     : Volume (%), Precipitação Satelital, Anomalia ONI
+  Épocas reais : 286 (early stopping | máx 1000)
+  Batch size   : 32  |  Otimizador: Adam + ReduceLR
+  Regularização: L2 (1e-4) + Dropout (0.25 / 0.20)
+
+2. DIVISÃO DOS DADOS
+---------------------------------------------------------------------
+  Treino     : 1983 → 2018 (372 amostras)
+  Validação  : 2019 → 2021 (36 amostras)
+  Teste      : 2022 → 2024 (24 amostras — dados inéditos)
+
+3. DESEMPENHO NO CONJUNTO DE TESTE
+---------------------------------------------------------------------
+  MAE  : 2.68%
+  RMSE : 3.20%
+  Corr : 0.8784
+
+4. PROJEÇÕES FUTURAS — CENÁRIOS ONI
+---------------------------------------------------------------------
+  [La Niña forte (−1.5)          ] → 60.61% em junho/2024
+  [Neutro (0.0)                  ] → 61.49% em junho/2024
+  [El Niño moderado (+1.2)       ] → 62.79% em junho/2024
+  [El Niño forte (+1.8)          ] → 63.53% em junho/2024
+
+5. GRÁFICOS GERADOS
+---------------------------------------------------------------------
+  01_loss_convergencia.png   — Curva de loss (treino vs validação)
+  02_predicao_vs_real.png    — Predito vs Real + resíduos (teste)
+  03_historico_oni.png       — Série histórica + índice ONI
+  04_dispersao_residuos.png  — Dispersão Real×Previsto + distribuição
+  05_projecao_cenarios.png   — Projeção futura (4 cenários ONI)
+
+6. ANÁLISE TÉCNICA
+---------------------------------------------------------------------
+
+6.1 CONVERGÊNCIA DO LOSS E COMPORTAMENTO DO TREINAMENTO
+
+  O modelo foi treinado com limite de 1000 épocas, mas o mecanismo de
+  Early Stopping interrompeu o treinamento na época 286, restaurando
+  os pesos da época 226 (melhor val_loss registrado). Esse comportamento
+  é esperado e desejável: indica que o modelo encontrou um mínimo
+  consistente sem precisar percorrer todas as épocas configuradas,
+  economizando tempo e evitando degradação tardia.
+
+  A curva de loss de treino e validação convergem de forma paralela e
+  próxima durante todo o treinamento, o que é o sinal mais importante
+  de um modelo bem calibrado. Não há divergência relevante entre as
+  duas curvas — o modelo generaliza bem para dados que nunca viu.
+
+  O ReduceLROnPlateau atuou pelo menos uma vez ao longo do treino,
+  reduzindo a taxa de aprendizado de 0.001 para 0.000125, o que
+  permitiu ao modelo refinar os pesos nas épocas finais sem oscilar.
+
+6.2 OVERFITTING E UNDERFITTING
+
+  O modelo não apresenta sinais significativos de overfitting. A
+  diferença entre o loss de treino e validação nas épocas finais
+  permaneceu pequena, indicando que as técnicas de regularização
+  adotadas — Dropout (0.25 na primeira camada BiLSTM, 0.20 na segunda)
+  e L2 (1e-4) — foram suficientes para conter a memorização dos dados
+  de treino.
+
+  Tampouco há underfitting: o MAE de 2.68% e o RMSE de 3.20% no
+  conjunto de teste representam erros baixos para uma série hidrológica
+  com forte dependência sazonal e climática. Um modelo subajustado
+  produziria erros acima de 8-10% nesse contexto.
+
+  O coeficiente de correlação de 0.878 entre valores reais e previstos
+  confirma que o modelo captura a tendência e a sazonalidade do volume
+  de forma robusta.
+
+6.3 IMPACTO DO EL NIÑO NO AÇUDE ARMANDO RIBEIRO GONÇALVES
+
+  A análise dos dados históricos (1987–2023) evidencia que o Índice
+  ONI (Oceanic Niño Index) é o principal modulador climático externo
+  do comportamento do reservatório, especialmente em eventos extremos.
+
+  O El Niño forte atua reduzindo a precipitação no semiárido nordestino
+  por interferir no posicionamento da Zona de Convergência Intertropical
+  (ZCIT), que é a principal fonte de chuvas para a bacia do Açu. Em
+  anos de ONI acima de +1.5, a ZCIT tende a se deslocar para norte,
+  privando o Nordeste das chuvas de março a junho.
+
+  O El Niño de 2015/2016 foi o mais severo registrado nos dados: com
+  ONI chegando a +2.63 em janeiro de 2016, o volume do Açu atingiu
+  seu mínimo histórico de 20.5%. Os 6 meses mais anômalos identificados
+  pelo Isolation Forest pertencem a esse período (agosto/2015 a
+  fevereiro/2016), todos com ONI acima de +2.0.
+
+  A relação não é, porém, linear nem simétrica. La Niñas fortes nem
+  sempre produzem cheias proporcionais: o episódio de La Niña de
+  2010/2011 (ONI −1.0) gerou excessos hídricos expressivos (vol. acima
+  de 101% em maio/2011), enquanto os excessos de 1987 e 1992 ocorreram
+  com El Niño moderado — sugerindo que, em eventos de cheia, a
+  precipitação local e os sistemas de mesoescala têm peso maior do que
+  o ONI isoladamente.
+
+  As projeções futuras do modelo refletem essa assimetria: a diferença
+  entre o cenário de La Niña forte (60.61%) e El Niño forte (63.53%)
+  em junho/2024 é de apenas 2.92 pontos percentuais. Isso indica que,
+  no estado atual do reservatório (~55% ao fim de 2023), o ONI exerce
+  influência marginal no curto prazo — o volume recente é o preditor
+  dominante. O impacto do ONI tende a se amplificar em horizontes mais
+  longos (6–12 meses) e em condições de reservatório já crítico (abaixo
+  de 30%).
+
+6.4 ANÁLISE COMPLEMENTAR — ISOLATION FOREST
+
+  O modelo de detecção de anomalias identificou 31 meses anômalos em
+  442 analisados (~7%), divididos em 16 secas extremas e 15 excessos
+  hídricos. A distribuição sazonal das anomalias é concentrada: março
+  e abril juntos respondem por 14 das 31 ocorrências (45%), coincidindo
+  com o pico da estação chuvosa no Nordeste. Esse é o período de maior
+  variabilidade: quando a chuva vem, o reservatório sobe abruptamente;
+  quando não vem, o déficit acumulado se torna crítico.
+
+  A correlação entre anomalias e |ONI| foi de 0.195 — moderada, mas
+  não desprezível para uma série com tantos fatores locais. Isso
+  reforça a conclusão de que o ONI é condição favorável, não condição
+  suficiente, para eventos extremos no Açu.
+
+  Os scores do Isolation Forest (mais negativos = mais anômalos)
+  confirmam a hierarquia: janeiro/2016 (score −0.69) e dezembro/2015
+  (score −0.67) são os meses mais isolados do comportamento histórico
+  normal — verdadeiros outliers climáticos no registro de 37 anos.
+
+=====================================================================

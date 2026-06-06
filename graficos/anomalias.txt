@@ -1,0 +1,79 @@
+=====================================================================
+   RELATÓRIO DE ANOMALIAS — ISOLATION FOREST · AÇUDE ARMANDO RIBEIRO
+=====================================================================
+
+1. CONFIGURAÇÃO DO MODELO
+---------------------------------------------------------------------
+  Algoritmo      : Isolation Forest (sklearn)
+  N° de árvores  : 200
+  Contaminação   : 7% (fração esperada de anomalias)
+  Features usadas: Volume (%), Precipitação, ONI, ΔVolume,
+                   Desvio Sazonal, Precipitação × ONI
+
+2. RESUMO DOS RESULTADOS
+---------------------------------------------------------------------
+  Total de meses analisados : 442
+  Anomalias detectadas      : 31
+  → Secas extremas          : 16
+  → Excessos hídricos       : 15
+  Mês mais crítico histórico: abril (9 ocorrências)
+  Correlação anomalia × |ONI|: 0.195
+
+3. TOP 10 SECAS EXTREMAS
+---------------------------------------------------------------------
+  01/2016  |  Vol: 20.5%  |  Precip: 7.10 mm  |  ONI: +2.63  |  Score: -0.6915
+  12/2015  |  Vol: 21.1%  |  Precip: 6.83 mm  |  ONI: +2.52  |  Score: -0.6683
+  03/2002  |  Vol: 51.7%  |  Precip: 14.57 mm  |  ONI: +0.09  |  Score: -0.6649
+  11/2015  |  Vol: 21.7%  |  Precip: 6.57 mm  |  ONI: +2.41  |  Score: -0.6440
+  04/2022  |  Vol: 51.8%  |  Precip: 7.09 mm  |  ONI: -0.95  |  Score: -0.6417
+  10/2015  |  Vol: 22.4%  |  Precip: 6.30 mm  |  ONI: +2.30  |  Score: -0.6290
+  09/2015  |  Vol: 23.0%  |  Precip: 6.04 mm  |  ONI: +2.19  |  Score: -0.6145
+  04/2023  |  Vol: 64.2%  |  Precip: 3.24 mm  |  ONI: +0.27  |  Score: -0.6039
+  02/2016  |  Vol: 20.8%  |  Precip: 1.92 mm  |  ONI: +2.28  |  Score: -0.5999
+  08/2015  |  Vol: 23.7%  |  Precip: 5.77 mm  |  ONI: +2.07  |  Score: -0.5993
+
+4. TOP 10 EXCESSOS HÍDRICOS
+---------------------------------------------------------------------
+  02/1992  |  Vol: 95.3%  |  Precip: 5.37 mm  |  ONI: +1.63  |  Score: -0.6632
+  05/2011  |  Vol: 101.1%  |  Precip: 5.58 mm  |  ONI: -0.46  |  Score: -0.6568
+  04/1987  |  Vol: 100.8%  |  Precip: 2.26 mm  |  ONI: +0.95  |  Score: -0.6531
+  04/1988  |  Vol: 95.8%  |  Precip: 7.08 mm  |  ONI: -0.31  |  Score: -0.6487
+  04/1994  |  Vol: 80.9%  |  Precip: 5.85 mm  |  ONI: +0.31  |  Score: -0.6237
+  02/2011  |  Vol: 71.9%  |  Precip: 5.92 mm  |  ONI: -1.04  |  Score: -0.6159
+  03/2011  |  Vol: 85.0%  |  Precip: 3.56 mm  |  ONI: -0.80  |  Score: -0.6137
+  03/1992  |  Vol: 99.9%  |  Precip: 3.78 mm  |  ONI: +1.48  |  Score: -0.6126
+  03/1987  |  Vol: 82.5%  |  Precip: 7.92 mm  |  ONI: +1.06  |  Score: -0.6078
+  05/1988  |  Vol: 101.1%  |  Precip: 3.41 mm  |  ONI: -0.88  |  Score: -0.6049
+
+5. FREQUÊNCIA DE ANOMALIAS POR MÊS DO ANO
+---------------------------------------------------------------------
+  janeiro     : ███ (3)
+  fevereiro   : ███ (3)
+  março       : █████ (5)
+  abril       : █████████ (9)
+  maio        : ████ (4)
+  junho       : █ (1)
+  julho       : █ (1)
+  agosto      : █ (1)
+  setembro    : █ (1)
+  outubro     : █ (1)
+  novembro    : █ (1)
+  dezembro    : █ (1)
+
+6. INTEGRAÇÃO COM LSTM
+---------------------------------------------------------------------
+  O score_if e o flag anomalia podem ser usados como features
+  adicionais no train_model.py para melhorar a LSTM em períodos
+  extremos. Importe com:
+    from anomaly_detection import carregar_dados, detectar_anomalias
+    feats = detectar_anomalias(df_monthly)
+    df_monthly['anomalia'] = feats['anomalia']
+    df_monthly['score_if'] = feats['score_if']
+
+7. ANÁLISE DO ESPECIALISTA
+---------------------------------------------------------------------
+  [Comente os eventos de seca identificados — 2012, 2016?]
+  [Há relação clara entre secas extremas e El Niño/La Niña?]
+  [Os excessos hídricos coincidem com La Niñas fortes?]
+
+=====================================================================
